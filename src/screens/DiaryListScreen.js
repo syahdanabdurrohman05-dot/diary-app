@@ -1,100 +1,128 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, useWindowDimensions } from 'react-native';
 import DiaryCard from '../components/DiaryCard';
+import DiaryDetailModal from '../components/DiaryDetailModal';
+import { COLORS, SPACE, TYPO, BREAKPOINTS } from '../styles/tokens';
 
-const diaryEntries = [
+const DATA = [
   {
     id: 1,
     title: 'Pagi yang Tenang',
     date: '2025-10-06',
-    preview: 'Hari ini aku bangun lebih pagi dan berjalan kaki 20 menit. Udara terasa sejuk...',
-    imageSource: require('../../assets/moods/kei.jpeg'), // Memakai foto lokal
-    moodType: 'calm',
+    preview: 'Hari ini aku bangun lebih pagi dan berjalan kaki 20 menit...',
+    body: 'Hari ini aku bangun lebih pagi dan berjalan kaki 20 menit. Udara terasa sejuk dan suasana sangat damai untuk memulai aktivitas hari ini.',
+    imageSource: require('../../assets/moods/kei.jpeg'),
+    heroUri: 'https://picsum.photos/seed/happyhero/800/450',
   },
   {
     id: 2,
     title: 'Produktif di Kampus',
     date: '2025-10-05',
-    preview: 'Menyelesaikan modul praktikum dan berdiskusi dengan tim. Banyak insight baru...',
-    imageSource: 'https://picsum.photos/seed/focus/80',
-    moodType: 'focus',
+    preview: 'Menyelesaikan modul praktikum dan berdiskusi dengan tim...',
+    body: 'Menyelesaikan modul praktikum dan berdiskusi bersama tim mengenai desain UI. Banyak wawasan baru tentang Flexbox dan layout responsif.',
+    moodUri: 'https://picsum.photos/seed/focus/200',
+    heroUri: 'https://picsum.photos/seed/focushero/800/450',
   },
   {
     id: 3,
     title: 'Senja di Taman',
     date: '2025-10-04',
-    preview: 'Menikmati senja sambil membaca buku favorit. Warna langit sangat indah...',
-    imageSource: 'https://picsum.photos/seed/calm/80',
-    moodType: 'calm',
+    preview: 'Menikmati senja sambil membaca buku favorit...',
+    body: 'Menikmati senja sambil membaca buku favorit di bangku taman kota. Warna langit senja jingga keemasan sangat menenangkan pikiran.',
+    moodUri: 'https://picsum.photos/seed/calm/200',
+    heroUri: 'https://picsum.photos/seed/calmhero/800/450',
   },
   {
     id: 4,
     title: 'Ngopi Sore',
     date: '2025-10-03',
     preview: 'Duduk santai di kedai kopi sambil menulis rencana minggu depan...',
-    imageSource: 'https://picsum.photos/seed/coffee/80',
-    moodType: 'happy',
+    body: 'Duduk santai di kedai kopi langganan sambil menulis rencana kegiatan minggu depan. Kopi hangat membuat pikiran lebih fokus dan terarah.',
+    moodUri: 'https://picsum.photos/seed/coffee/200',
+    heroUri: 'https://picsum.photos/seed/coffeehero/800/450',
   },
   {
     id: 5,
     title: 'Olahraga Pagi',
     date: '2025-10-02',
     preview: 'Jogging keliling kompleks perumahan agar tubuh tetap bugar...',
-    imageSource: 'https://picsum.photos/seed/run/80',
-    moodType: 'happy',
+    body: 'Jogging keliling kompleks perumahan sebanyak tiga putaran agar tubuh tetap bugar dan siap menghadapi perkuliahan sepanjang hari.',
+    moodUri: 'https://picsum.photos/seed/run/200',
+    heroUri: 'https://picsum.photos/seed/runhero/800/450',
   },
 ];
 
 export default function DiaryListScreen() {
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header dengan Avatar Pengguna */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.header}>Buku Harian</Text>
-        <Image
-          source={{ uri: 'https://picsum.photos/seed/avatar123/100' }}
-          style={styles.avatar}
-        />
-      </View>
+  const { width } = useWindowDimensions();
+  const twoCols = width >= BREAKPOINTS.tablet;
+  const [selected, setSelected] = useState(null);
 
-      {/* Daftar Kartu Diary */}
-      {diaryEntries.map((entry) => (
-        <DiaryCard
-          key={entry.id}
-          title={entry.title}
-          date={entry.date}
-          preview={entry.preview}
-          imageSource={entry.imageSource}
-          moodType={entry.moodType}
-        />
-      ))}
-    </ScrollView>
+  // Kunci unik FlatList agar otomatis re-render saat orientasi/kolom berubah
+  const keyForCols = useMemo(() => (twoCols ? 'grid2' : 'list1'), [twoCols]);
+
+  const renderItem = ({ item }) => (
+    <View style={[styles.itemWrap, twoCols && styles.itemWrap2]}>
+      <DiaryCard
+        title={item.title}
+        date={item.date}
+        preview={item.preview}
+        imageSource={item.imageSource}
+        moodUri={item.moodUri}
+        variant={twoCols ? 'grid' : 'list'}
+        onPress={() => setSelected(item)}
+      />
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Buku Harian</Text>
+      <FlatList
+        key={keyForCols}
+        data={DATA}
+        numColumns={twoCols ? 2 : 1}
+        keyExtractor={(it) => String(it.id)}
+        renderItem={renderItem}
+        columnWrapperStyle={twoCols ? { gap: SPACE.m } : undefined}
+        contentContainerStyle={{
+          padding: SPACE.l,
+          gap: SPACE.m,
+          paddingTop: SPACE.m,
+        }}
+        ListEmptyComponent={<Text style={styles.empty}>Belum ada entri.</Text>}
+      />
+
+      {/* Modal Detail */}
+      <DiaryDetailModal
+        visible={!!selected}
+        entry={selected}
+        onClose={() => setSelected(null)}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  content: {
-    padding: 16,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    backgroundColor: COLORS.surface,
   },
   header: {
-    fontSize: 24,
+    fontSize: TYPO.h1,
     fontWeight: '700',
+    paddingHorizontal: SPACE.l,
+    paddingTop: SPACE.l,
+    color: COLORS.text,
   },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderColor: '#3b82f6',
+  itemWrap: {
+    flex: 1,
+  },
+  itemWrap2: {
+    flex: 1 / 2,
+  },
+  empty: {
+    textAlign: 'center',
+    color: COLORS.muted,
+    marginTop: 40,
   },
 });

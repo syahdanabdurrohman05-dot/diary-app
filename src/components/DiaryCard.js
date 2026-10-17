@@ -1,67 +1,80 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, Pressable } from 'react-native';
+import { COLORS, SPACE, RADIUS, TYPO } from '../styles/tokens';
 
-export default function DiaryCard({ title, date, preview, imageSource, moodType }) {
-  // Variasi border berdasarkan mood
-  const getMoodBorderStyle = (type) => {
-    switch (type) {
-      case 'happy':
-        return { borderColor: '#f59e0b', borderWidth: 2 }; // Kuning
-      case 'focus':
-        return { borderColor: '#3b82f6', borderWidth: 2 }; // Biru
-      case 'calm':
-        return { borderColor: '#10b981', borderWidth: 2 }; // Hijau
-      default:
-        return { borderColor: '#e5e7eb', borderWidth: 1 }; // Default abu-abu
-    }
-  };
+export default function DiaryCard({
+  title,
+  date,
+  preview,
+  imageSource,
+  moodUri,
+  onPress,
+  variant = 'list',
+}) {
+  // Tetap mendukung foto lokal kei.jpeg maupun URL remote
+  const resolvedImage = imageSource || (moodUri ? { uri: moodUri } : null);
 
   return (
-    <View style={[styles.card, getMoodBorderStyle(moodType)]}>
-      <Image
-        source={typeof imageSource === 'string' ? { uri: imageSource } : imageSource}
-        style={styles.mood}
-      />
-      <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
-        <Text style={styles.date}>{date}</Text>
-        <Text style={styles.preview} numberOfLines={3} ellipsizeMode="tail">
-          {preview}
-        </Text>
+    <Pressable
+      onPress={onPress}
+      android_ripple={{ color: '#e5e7eb' }}
+      style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
+      accessible
+      accessibilityLabel={`Entri ${title} tanggal ${date}`}
+    >
+      <View style={[styles.card, variant === 'grid' && styles.cardGrid]}>
+        {resolvedImage && (
+          <Image
+            source={typeof resolvedImage === 'string' ? { uri: resolvedImage } : resolvedImage}
+            style={styles.mood}
+          />
+        )}
+        <View style={styles.content}>
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+          <Text style={styles.date}>{date}</Text>
+          <Text style={styles.preview} numberOfLines={3} ellipsizeMode="tail">
+            {preview}
+          </Text>
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    gap: 12,
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
-    backgroundColor: '#ffffff',
+    gap: SPACE.m,
+    padding: SPACE.m,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.card,
+    backgroundColor: COLORS.surface,
   },
+  cardGrid: {},
   mood: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: RADIUS.avatar,
+    backgroundColor: '#eef2ff',
   },
   content: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: TYPO.title,
     fontWeight: '700',
+    color: COLORS.text,
   },
   date: {
-    fontSize: 12,
-    color: '#6b7280',
+    fontSize: TYPO.caption,
+    color: COLORS.muted,
     marginBottom: 6,
   },
   preview: {
-    fontSize: 14,
+    fontSize: TYPO.body,
+    color: COLORS.text,
   },
 });
